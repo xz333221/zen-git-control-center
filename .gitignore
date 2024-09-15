@@ -1,0 +1,11 @@
+# 忽略顶级和所有子目录中的 .vscode 文件夹
+**/.vscode/
+**/.idea/
+
+# 忽略顶级和所有子目录中的 node_modules 文件夹
+**/node_modules/
+
+**/package-lock.json
+server/run
+server/test
+

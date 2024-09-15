@@ -1,0 +1,11 @@
+{
+  "name": "zen-git-control-center",
+  "version": "1.0.0",
+  "description": "a git control project",
+  "main": "index.js",
+  "scripts": {
+    "dev": "dev"
+  },
+  "author": "",
+  "license": "MIT"
+}
