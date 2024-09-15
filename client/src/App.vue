@@ -241,10 +241,12 @@ async function getMyTodayCode() {
       prop: '%s',
     }
   ]
-  let column = ['哈希值', '时间', '分支', '信息'];
+  let column = ['哈希', '时间', '分支', '信息'];
   let columnData = formatListData.filter(item => column.includes(item.label))
   let keyList = columnData.map(item => item.prop);
-  let formatString = keyList.join(' - ');
+  let symbol = '--|--';
+  let formatString = keyList.join(symbol);
+  console.log(`formatString ==> `, formatString)
 
   const command = `git log --author="${userName.value}" --since=midnight --pretty=format:"${formatString}" --date=format:"%Y-%m-%d %H:%M"`;
   await runGitCmd(command, 'gitLog');
