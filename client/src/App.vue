@@ -7,7 +7,7 @@
                    :value="project.name"></el-option>
       </el-select>
       <el-button type="primary" @click="showDialog = true">设置</el-button>
-      <el-button type="primary" @click="runGitCmd('git config user.name')">git config user.name</el-button>
+<!--      <el-button type="primary" @click="runGitCmd('git config user.name')">git config user.name</el-button>-->
       <el-button type="primary" @click="runGitCmd('git status')">获取项目状态</el-button>
       <el-button type="primary" @click="runGitCmd('git branch')">获取项目分支</el-button>
       <el-button type="primary" @click="runGitCmd('git branch --all')">获取所有项目分支</el-button>
@@ -30,9 +30,17 @@
         <el-button type="primary" @click="runGitCmd('git push')">push</el-button>
       </div>
       <div class="content">
-        <pre>{{ result }}</pre>
+        <div v-for="item in result" :key="item">
+          {{item}}
+        </div>
+        <div class="gitLogWrap">
+          <div v-for="item in gitLog" :key="item">
+            {{item}}
+            <el-button type="primary" @click="copyHash(item)">复制hash</el-button>
+          </div>
+
+        </div>
       </div>
-      <el-button type="primary" @click='getMyTodayCode'>复制hash</el-button>
     </el-main>
 
     <!-- 弹窗 -->
@@ -62,7 +70,8 @@ import $http from './request/index.js';
 const dbName = 'projectsDB';
 const storeName = 'projectsStore';
 
-const result = ref('');
+const result = ref([]);
+const gitLog = ref([]);
 const commitContent = ref('');
 const userName = ref('');
 let db;
@@ -154,12 +163,19 @@ async function removeProject(name) {
 }
 
 // 操作项目
-async function runGitCmd(cmd) {
+async function runGitCmd(cmd, type) {
   if (!selectedProject.value) return;
   // 这里调用后端 API 获取项目状态
   const res = await $http.post('/api/run/cmd', {cmd, path: selectedProject.value})
-  result.value = res.data;
-  return res.data;
+  const resultValue = res.data.split('\n');
+  switch (type) {
+    case 'gitLog':
+      gitLog.value = resultValue;
+      break;
+    default:
+      result.value = resultValue;
+  }
+  return resultValue;
   // ElMessage.success(`操作成功`);
 }
 async function runCmd(cmd) {
@@ -180,9 +196,63 @@ async function addAndCommitAndPush() {
   await runGitCmd('git push');
 }
 async function getMyTodayCode() {
-  const command = `git log --author="${userName.value}" --since=midnight --pretty=format:"%h - %ad [%D] - %s" --date=format:"%Y-%m-%d %H:%M"`;
-  await runGitCmd(command);
+  const formatList = {
+    "%H": "提交的完整哈希值",
+    "%h": "提交的简短哈希值",
+    "%T": "树对象的完整哈希值",
+    "%t": "树对象的简短哈希值",
+    "%P": "父提交的完整哈希值",
+    "%p": "父提交的简短哈希值",
+    "%an": "作者名字",
+    "%ae": "作者电子邮件",
+    "%cn": "提交者名字",
+    "%ce": "提交者电子邮件",
+    "%d": "引用（如标签、分支名）信息",
+    "%D": "类似于 %d，包括分支和标签的详细信息。",
+    "%f": "提交信息的缩略版本，用于 URL",
+    "%s": "提交信息（主题行）",
+    "%b": "提交信息的主体部分",
+    "%N": "没有换行的提交信息（没有空行的内容）",
+    "%ai": "作者时间（ISO 8601 格式）",
+    "%aI": "作者时间（ISO 8601 格式，无时区）",
+    "%aD": "作者时间（RFC 2822 格式）",
+    "%ad": "作者时间（RFC 2822 格式）该占位符会根据 --date 选项的设置格式化时间",
+    "%ci": "提交时间（ISO 8601 格式）",
+    "%cI": "提交时间（ISO 8601 格式，无时区）",
+    "%cD": "提交时间（RFC 2822 格式）",
+    "%cr": "提交时间（相对时间，如“2 weeks ago”）",
+    "%e": "邮件地址（作者和提交者的地址）"
+  };
+  const formatListData = [
+    {
+      label: '哈希',
+      prop: '%h',
+    },
+    {
+      label: '时间',
+      prop: '%ad',
+    },
+    {
+      label: '分支',
+      prop: '%D',
+    },
+    {
+      label: '信息',
+      prop: '%s',
+    }
+  ]
+  let column = ['哈希值', '时间', '分支', '信息'];
+  let columnData = formatListData.filter(item => column.includes(item.label))
+  let keyList = columnData.map(item => item.prop);
+  let formatString = keyList.join(' - ');
+
+  const command = `git log --author="${userName.value}" --since=midnight --pretty=format:"${formatString}" --date=format:"%Y-%m-%d %H:%M"`;
+  await runGitCmd(command, 'gitLog');
 }
+async function copyHash(item) {
+  await navigator.clipboard.writeText(item.slice(0, 7));
+}
+
 </script>
 
 <style scoped>
