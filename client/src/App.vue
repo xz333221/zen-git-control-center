@@ -32,6 +32,7 @@
       <div class="content">
         <pre>{{ result }}</pre>
       </div>
+      <el-button type="primary" @click='getMyTodayCode'>复制hash</el-button>
     </el-main>
 
     <!-- 弹窗 -->
