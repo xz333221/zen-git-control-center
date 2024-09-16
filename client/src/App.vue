@@ -34,11 +34,18 @@
           {{ item }}
         </div>
         <div class="gitLogWrap">
-          <div v-for="item in gitLog" :key="item">
-            {{ item }}
-            <el-button type="primary" @click="copyHash(item)">复制hash</el-button>
-          </div>
-
+<!--          <div v-for="item in gitLog" :key="item">-->
+<!--            {{ item }}-->
+<!--            <el-button type="primary" @click="copyHash(item)">复制hash</el-button>-->
+<!--          </div>-->
+          <el-table :data="gitLog" style="width: 100%;">
+            <el-table-column v-for="item in tableColumn" :prop="item.prop" :label="item.label"/>
+            <el-table-column label="操作">
+              <template #default="{ row }">
+                <el-button type="primary" @click="copyHash(row.hash)">复制hash</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
       </div>
     </el-main>
@@ -74,6 +81,7 @@ const result = ref([]);
 const gitLog = ref([]);
 const commitContent = ref('');
 const userName = ref('');
+const tableColumn = ref([]);
 let db;
 
 async function readDirectory() {
@@ -230,42 +238,63 @@ async function getMyTodayCode() {
   const formatListData = [
     {
       label: '哈希',
-      prop: '%h',
+      symbol: '%h',
+      prop: 'hash',
     },
     {
       label: '时间',
-      prop: '%ad',
+      symbol: '%ad',
+      prop: 'date',
     },
     {
       label: '分支',
-      prop: '%D',
+      symbol: '%D',
+      prop: 'branch',
     },
     {
       label: '信息',
-      prop: '%s',
+      symbol: '%s',
+      prop: 'message',
     },
     {
       label: '作者',
-      prop: '%an',
+      symbol: '%an',
+      prop: 'author',
     },
     {
       label: '提交者',
-      prop: '%cn',
+      symbol: '%cn',
+      prop: 'committer',
     },
     {
       label: '邮箱',
-      prop: '%e',
+      symbol: '%e',
+      prop: 'email',
     },
   ]
   let column = ['哈希', '作者', '时间', '分支', '信息'];
-  let columnData = formatListData.filter(item => column.includes(item.label))
-  let keyList = columnData.map(item => item.prop);
+  // let columnData = formatListData.filter(item => column.includes(item.label))
+  let columnData = column.map(item => {
+    return formatListData.find(i => i.label === item)
+  })
+  tableColumn.value = columnData
+  let keyList = columnData.map(item => item.symbol);
   let symbol = '--|--';
   let formatString = keyList.join(symbol);
   console.log(`formatString ==> `, formatString)
 
   const command = `git log --author="${userName.value}" --since=midnight --pretty=format:"${formatString}" --date=format:"%Y-%m-%d %H:%M"`;
-  await runGitCmd(command, 'gitLog');
+  const res = await runCmd(command, 'gitLog');
+  console.log(`res ==> `, res)
+  let list = columnData.map((item,i) => {
+    return {
+      label: item.label,
+      prop: item.prop,
+      value: res.split('--|--')[i]
+    }
+  });
+  console.log(`list ==> `, list)
+  gitLog.value = list;
 }
 
 async function copyHash(item) {
