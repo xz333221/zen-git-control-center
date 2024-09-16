@@ -7,7 +7,7 @@
                    :value="project.name"></el-option>
       </el-select>
       <el-button type="primary" @click="showDialog = true">设置</el-button>
-<!--      <el-button type="primary" @click="runGitCmd('git config user.name')">git config user.name</el-button>-->
+      <!--      <el-button type="primary" @click="runGitCmd('git config user.name')">git config user.name</el-button>-->
       <el-button type="primary" @click="runGitCmd('git status')">获取项目状态</el-button>
       <el-button type="primary" @click="runGitCmd('git branch')">获取项目分支</el-button>
       <el-button type="primary" @click="runGitCmd('git branch --all')">获取所有项目分支</el-button>
@@ -31,11 +31,11 @@
       </div>
       <div class="content">
         <div v-for="item in result" :key="item">
-          {{item}}
+          {{ item }}
         </div>
         <div class="gitLogWrap">
           <div v-for="item in gitLog" :key="item">
-            {{item}}
+            {{ item }}
             <el-button type="primary" @click="copyHash(item)">复制hash</el-button>
           </div>
 
@@ -146,6 +146,7 @@ const getGitUserName = async () => {
   const res = await runCmd('git config user.name')
   userName.value = res.trim();
 }
+
 // 添加项目
 async function addProject() {
   if (!newProject.value) return;
@@ -178,6 +179,7 @@ async function runGitCmd(cmd, type) {
   return resultValue;
   // ElMessage.success(`操作成功`);
 }
+
 async function runCmd(cmd) {
   const res = await $http.post('/api/run/cmd', {cmd, path: selectedProject.value})
   return res.data;
@@ -189,12 +191,14 @@ async function commit() {
   }
   await runGitCmd(`git commit -m "${commitContent.value}"`);
 }
+
 async function addAndCommitAndPush() {
   if (!selectedProject.value) return;
   await runGitCmd('git add .');
   await commit();
   await runGitCmd('git push');
 }
+
 async function getMyTodayCode() {
   const formatList = {
     "%H": "提交的完整哈希值",
@@ -239,9 +243,21 @@ async function getMyTodayCode() {
     {
       label: '信息',
       prop: '%s',
-    }
+    },
+    {
+      label: '作者',
+      prop: '%an',
+    },
+    {
+      label: '提交者',
+      prop: '%cn',
+    },
+    {
+      label: '邮箱',
+      prop: '%e',
+    },
   ]
-  let column = ['哈希', '时间', '分支', '信息'];
+  let column = ['哈希', '作者', '时间', '分支', '信息'];
   let columnData = formatListData.filter(item => column.includes(item.label))
   let keyList = columnData.map(item => item.prop);
   let symbol = '--|--';
@@ -251,6 +267,7 @@ async function getMyTodayCode() {
   const command = `git log --author="${userName.value}" --since=midnight --pretty=format:"${formatString}" --date=format:"%Y-%m-%d %H:%M"`;
   await runGitCmd(command, 'gitLog');
 }
+
 async function copyHash(item) {
   await navigator.clipboard.writeText(item.slice(0, 7));
 }
