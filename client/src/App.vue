@@ -286,19 +286,21 @@ async function getMyTodayCode() {
   const command = `git log --author="${userName.value}" --since=midnight --pretty=format:"${formatString}" --date=format:"%Y-%m-%d %H:%M"`;
   const res = await runCmd(command, 'gitLog');
   console.log(`res ==> `, res)
-  let list = columnData.map((item,i) => {
-    return {
-      label: item.label,
-      prop: item.prop,
-      value: res.split('--|--')[i]
-    }
-  });
-  console.log(`list ==> `, list)
-  gitLog.value = list;
+  let resList = res.split('\n');
+  let tableList = resList.map(item => {
+    let list = item.split('--|--');
+    let obj = {};
+    columnData.map((i, index) => {
+      obj[i.prop] = list[index];
+    });
+    return obj;
+  })
+  console.log(`tableList ==> `, tableList)
+  gitLog.value = tableList;
 }
 
 async function copyHash(item) {
-  await navigator.clipboard.writeText(item.slice(0, 7));
+  await navigator.clipboard.writeText(item);
 }
 
 </script>
