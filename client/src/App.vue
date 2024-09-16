@@ -15,6 +15,10 @@
       <el-button type="primary" @click="runGitCmd('git log')">git log</el-button>
       <el-button type="primary" @click="runGitCmd('git log --graph --oneline --decorate --all')">图形化log</el-button>
       <el-button type="primary" @click='getMyTodayCode'>我今天提交的代码</el-button>
+      <el-switch v-model="openPullTimer" active-color="#13ce66" inline-prompt @change="pullWithTimer"
+                 active-text="定时拉取代码" inactive-text="定时拉取代码"></el-switch>
+      <el-switch v-model="openViewSubmitTimer" active-color="#13ce66" inline-prompt @change="viewSubmitWithTimer"
+                 active-text="定时查看我的提交" inactive-text="定时查看我的提交"></el-switch>
 
       <!--      <el-button type="primary" @click="runGitCmd('git status')">提交</el-button>-->
     </el-header>
@@ -34,10 +38,10 @@
           {{ item }}
         </div>
         <div class="gitLogWrap">
-<!--          <div v-for="item in gitLog" :key="item">-->
-<!--            {{ item }}-->
-<!--            <el-button type="primary" @click="copyHash(item)">复制hash</el-button>-->
-<!--          </div>-->
+          <!--          <div v-for="item in gitLog" :key="item">-->
+          <!--            {{ item }}-->
+          <!--            <el-button type="primary" @click="copyHash(item)">复制hash</el-button>-->
+          <!--          </div>-->
           <el-table :data="gitLog" style="width: 100%;">
             <el-table-column v-for="item in tableColumn" :prop="item.prop" :label="item.label"/>
             <el-table-column label="操作">
@@ -82,6 +86,10 @@ const gitLog = ref([]);
 const commitContent = ref('');
 const userName = ref('');
 const tableColumn = ref([]);
+const openPullTimer = ref(false);
+const pullTimer = ref(null);
+const openViewSubmitTimer = ref(false);
+const viewSubmitTimer = ref(null);
 let db;
 
 async function readDirectory() {
@@ -301,6 +309,29 @@ async function getMyTodayCode() {
 
 async function copyHash(item) {
   await navigator.clipboard.writeText(item);
+}
+
+async function pullWithTimer(value) {
+  if (value) {
+    await runGitCmd('git pull');
+    pullTimer.value = setInterval(async () => {
+      await runGitCmd('git pull');
+      // }, 5 * 1000);
+    }, 10 * 60 * 1000);
+  } else {
+    clearInterval(pullTimer.value);
+  }
+}
+
+async function viewSubmitWithTimer(value) {
+  if (value) {
+    await getMyTodayCode();
+    viewSubmitTimer.value = setInterval(async () => {
+      await getMyTodayCode();
+    }, 10 * 60 * 1000);
+  } else {
+    clearInterval(viewSubmitTimer.value);
+  }
 }
 
 </script>
